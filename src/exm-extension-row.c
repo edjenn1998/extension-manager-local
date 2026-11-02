@@ -127,6 +127,12 @@ row_is_selectable (ExmExtensionRow *self)
     return is_user;
 }
 
+static gchar *
+extension_subtitle (GObject *object G_GNUC_UNUSED, const gchar *uuid, gboolean pending)
+{
+    return pending ? g_strdup_printf (_("Login required · %s"), uuid) : g_strdup (uuid);
+}
+
 static void
 exm_extension_row_set_property (GObject      *object,
                                 guint         prop_id,
@@ -329,6 +335,7 @@ exm_extension_row_class_init (ExmExtensionRowClass *klass)
     gtk_widget_class_bind_template_child (widget_class, ExmExtensionRow, out_of_date_icon);
 
     gtk_widget_class_bind_template_callback (widget_class, on_state_changed);
+    gtk_widget_class_bind_template_callback (widget_class, extension_subtitle);
     gtk_widget_class_bind_template_callback (widget_class, on_row_activated);
     gtk_widget_class_bind_template_callback (widget_class, on_state_is_error);
     gtk_widget_class_bind_template_callback (widget_class, on_state_is_out_of_date);

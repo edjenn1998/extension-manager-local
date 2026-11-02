@@ -1,4 +1,4 @@
-project('extension-manager', 'c',
+project('extension-manager-local', 'c',
           version: '0.6.5',
     meson_version: '>= 0.59.0',
   default_options: [ 'warning_level=2',
@@ -9,7 +9,7 @@ project('extension-manager', 'c',
 i18n = import('i18n')
 
 if get_option('development')
-  app_id = 'com.mattjakeman.ExtensionManager.Devel'
+  app_id = 'io.github.edjenn1998.ExtensionManagerLocal.Devel'
   vcs_tag = run_command('git', 'rev-parse', '--short', 'HEAD', check: false).stdout().strip()
   if vcs_tag == ''
     version_suffix = '-devel'
@@ -17,7 +17,7 @@ if get_option('development')
     version_suffix = '-@0@'.format(vcs_tag)
   endif
 else
-  app_id = 'com.mattjakeman.ExtensionManager'
+  app_id = 'io.github.edjenn1998.ExtensionManagerLocal'
   version_suffix = ''
 endif
 
@@ -44,6 +44,7 @@ add_project_arguments([
 subdir('data')
 subdir('src')
 subdir('po')
+subdir('tests')
 
 gnome.post_install(
   glib_compile_schemas: true,

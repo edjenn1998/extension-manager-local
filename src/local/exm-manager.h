@@ -42,6 +42,8 @@ void          exm_manager_remove_extension  (ExmManager           *self,
 void          exm_manager_open_prefs        (ExmManager           *self,
                                              ExmExtension         *extension);
 void          exm_manager_check_for_updates (ExmManager           *self);
+void          exm_manager_refresh_local     (ExmManager           *self,
+                                             const gchar          *uuid);
 gboolean      exm_manager_is_installed_uuid (ExmManager           *self,
                                              const gchar          *uuid);
 ExmExtension *exm_manager_get_by_uuid       (ExmManager           *self,

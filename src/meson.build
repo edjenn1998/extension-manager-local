@@ -2,6 +2,8 @@ exm_sources = [
   'main.c',
   'exm-window.c',
   'exm-application.c',
+  'exm-local-install.c',
+  'local/exm-local-zip.c',
   'exm-gnome-shell-search-provider.c',
 
   # Detail View
@@ -48,6 +50,7 @@ exm_deps = [
   dependency('libadwaita-1', version: '>= 1.8.alpha'),
   dependency('gio-unix-2.0'),
   dependency('json-glib-1.0'),
+  dependency('libarchive'),
   dependency('libsoup-3.0'),
   dependency('libxml-2.0'),
   dependency('glycin-2'),
@@ -101,6 +104,7 @@ exm_sources += gnome.mkenums_simple('exm-enums',
 gresourceconf = configuration_data()
 gresourceconf.set('appstream_file', '@0@.metainfo.xml'.format(app_id))
 gresourceconf.set('resource_path', '/' + app_id.replace('.', '/'))
+gresourceconf.set('app_id', app_id)
 
 gresource_file = configure_file(
   input: 'exm.gresource.xml.in',
@@ -114,7 +118,7 @@ exm_sources += gnome.compile_resources('exm-resources',
   c_name: 'exm'
 )
 
-executable('extension-manager', exm_sources,
+executable('extension-manager-local', exm_sources,
   dependencies: exm_deps,
   install: true,
 )

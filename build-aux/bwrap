@@ -1,0 +1,17 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Retain Glycin's namespace/seccomp sandbox, exposing the read-only AppImage.
+set -eu
+args=("$@")
+insert=0
+for i in "${!args[@]}"; do
+    if [[ "${args[$i]}" == --clearenv ]]; then
+        insert=$((i + 1))
+        break
+    fi
+done
+exec "$EXM_APPDIR/usr/libexec/bwrap" \
+    --ro-bind "$EXM_APPDIR" "$EXM_APPDIR" \
+    "${args[@]:0:$insert}" \
+    --setenv LD_LIBRARY_PATH "$EXM_APPDIR/usr/lib" \
+    "${args[@]:$insert}"

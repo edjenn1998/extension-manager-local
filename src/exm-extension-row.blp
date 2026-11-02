@@ -6,7 +6,7 @@ template $ExmExtensionRow: Adw.ActionRow {
   subtitle-lines: 1;
   use-markup: false;
   title: bind template.extension as <$ExmExtension>.name;
-  subtitle: bind template.extension as <$ExmExtension>.uuid;
+  subtitle: bind $extension_subtitle(template.extension as <$ExmExtension>.uuid, template.extension as <$ExmExtension>.local-pending) as <string>;
   activated => $on_row_activated();
 
   [suffix]

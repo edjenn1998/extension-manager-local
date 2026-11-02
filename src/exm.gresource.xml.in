@@ -20,8 +20,13 @@
     <file>exm-versions-dialog.ui</file>
     <file>exm-window.ui</file>
     <file alias="suggestions.txt">res/suggestions.txt</file>
-    <file preprocess="xml-stripblanks" alias="com.mattjakeman.ExtensionManager.metainfo.xml">../data/@appstream_file@</file>
+    <file preprocess="xml-stripblanks" alias="metainfo.xml">../data/@appstream_file@</file>
     <file>style.css</file>
+  </gresource>
+
+  <gresource prefix="@resource_path@/icons/scalable/apps">
+    <file alias="@app_id@.svg">../data/icons/io.github.edjenn1998.ExtensionManagerLocal.svg</file>
+    <file alias="@app_id@-symbolic.svg">../data/icons/io.github.edjenn1998.ExtensionManagerLocal-symbolic.svg</file>
   </gresource>
 
   <gresource prefix="@resource_path@/icons/scalable/actions">

@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
   workflow_call:
 
-name: Translations
+name: Upstream translations (reference only; requires upstream automation secrets)
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}

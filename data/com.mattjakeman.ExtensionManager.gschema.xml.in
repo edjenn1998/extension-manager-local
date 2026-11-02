@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="extension-manager">
-  <schema id="@app_id@" path="/com/mattjakeman/ExtensionManager/">
+  <schema id="@app_id@" path="/io/github/edjenn1998/ExtensionManagerLocal/">
     <key name="width" type="i">
       <default>800</default>
       <summary>Window Width</summary>

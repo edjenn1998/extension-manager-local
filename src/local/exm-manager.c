@@ -22,6 +22,8 @@
 #include "exm-manager.h"
 
 #include "shell-dbus-interface.h"
+#include <json-glib/json-glib.h>
+#include <glib/gi18n.h>
 
 #include "../exm-types.h"
 #include "../exm-enums.h"
@@ -40,6 +42,7 @@ struct _ExmManager
 
     guint update_callback_id;
     GCancellable *list_cancellable;
+    GHashTable *local_pending;
 };
 
 G_DEFINE_FINAL_TYPE (ExmManager, exm_manager, G_TYPE_OBJECT)
@@ -88,6 +91,7 @@ exm_manager_dispose (GObject *object)
 
     g_clear_object (&self->proxy);
     g_clear_object (&self->ext_model);
+    g_clear_pointer (&self->local_pending, g_hash_table_unref);
 
     G_OBJECT_CLASS (exm_manager_parent_class)->dispose (object);
 }
@@ -877,6 +881,50 @@ parse_extension_list (GVariant    *exlist,
 }
 
 static void
+add_local_extensions (ExmManager *self)
+{
+    /* GNOME Shell discovers newly installed local UUIDs at login. Include
+     * these disk-only entries now, without pretending they are loaded. */
+    g_autofree gchar *base = g_build_filename (g_get_user_data_dir (), "gnome-shell", "extensions", NULL);
+    g_autoptr (GDir) dir = g_dir_open (base, 0, NULL);
+    const gchar *uuid;
+    while (dir && (uuid = g_dir_read_name (dir)))
+    {
+        g_autoptr (ExmExtension) existing = exm_manager_get_by_uuid (self, uuid);
+        if (existing)
+        {
+            if (g_hash_table_contains (self->local_pending, uuid))
+            {
+                g_autofree gchar *description = NULL;
+                g_object_get (existing, "description", &description, NULL);
+                g_autofree gchar *pending = g_strdup_printf (_("Local update installed — log out and back in to load it.\n%s"),
+                                                             description ? description : "");
+                g_object_set (existing, "description", pending, "local-pending", TRUE, NULL);
+            }
+            continue;
+        }
+        g_autofree gchar *path = g_build_filename (base, uuid, NULL);
+        g_autofree gchar *metadata = g_build_filename (path, "metadata.json", NULL);
+        g_autoptr (JsonParser) parser = json_parser_new ();
+        if (!json_parser_load_from_file (parser, metadata, NULL) ||
+            !JSON_NODE_HOLDS_OBJECT (json_parser_get_root (parser)))
+            continue;
+        JsonObject *object = json_node_get_object (json_parser_get_root (parser));
+        JsonNode *uuid_node = json_object_get_member (object, "uuid");
+        JsonNode *name_node = json_object_get_member (object, "name");
+        if (!uuid_node || json_node_get_value_type (uuid_node) != G_TYPE_STRING ||
+            g_strcmp0 (json_node_get_string (uuid_node), uuid) != 0 ||
+            !name_node || json_node_get_value_type (name_node) != G_TYPE_STRING)
+            continue;
+        g_autoptr (ExmExtension) extension = exm_extension_new (uuid);
+        g_object_set (extension, "name", json_node_get_string (name_node),
+                       "description", _("Installed on disk — log out and back in to make this extension available to GNOME Shell."),
+                       "path", path, "is-user", TRUE, "can-change", FALSE, "local-pending", TRUE, NULL);
+        g_list_store_append (G_LIST_STORE (self->ext_model), extension);
+    }
+}
+
+static void
 on_list_extensions_ready (GObject      *source,
                           GAsyncResult *res,
                           gpointer      user_data)
@@ -902,6 +950,7 @@ on_list_extensions_ready (GObject      *source,
 
     parse_extension_list (exlist, &self->ext_model);
     g_variant_unref (exlist);
+    add_local_extensions (self);
 
     g_object_notify_by_pspec (G_OBJECT (self), properties [PROP_EXTENSIONS]);
 
@@ -920,6 +969,14 @@ update_extension_list (ExmManager *self)
 
     shell_extensions_call_list_extensions (self->proxy, self->list_cancellable,
                                            on_list_extensions_ready, g_object_ref (self));
+}
+
+void
+exm_manager_refresh_local (ExmManager *self, const gchar *uuid)
+{
+    g_hash_table_add (self->local_pending, g_strdup (uuid));
+    if (self->proxy)
+        update_extension_list (self);
 }
 
 static void
@@ -1054,6 +1111,7 @@ on_proxy_created (GObject      *source G_GNUC_UNUSED,
 static void
 exm_manager_init (ExmManager *self)
 {
+    self->local_pending = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
     self->update_callback_id = 0;
 
     shell_extensions_proxy_new_for_bus (G_BUS_TYPE_SESSION,

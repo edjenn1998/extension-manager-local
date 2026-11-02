@@ -25,6 +25,7 @@
 #include "exm-gnome-shell-search-provider.h"
 #include "exm-types.h"
 #include "exm-window.h"
+#include "exm-local-install.h"
 
 #include "exm-utils.h"
 
@@ -106,6 +107,29 @@ exm_application_activate (GApplication *app)
     gtk_window_present (window);
 }
 
+typedef struct
+{
+    GtkWindow *window;
+    GFile *file;
+} PendingLocalOpen;
+
+static void
+pending_local_open_free (gpointer user_data, GClosure *closure G_GNUC_UNUSED)
+{
+    PendingLocalOpen *data = user_data;
+    g_object_unref (data->window);
+    g_object_unref (data->file);
+    g_free (data);
+}
+
+static void
+open_local_when_ready (ExmManager *manager, GParamSpec *pspec G_GNUC_UNUSED, PendingLocalOpen *data)
+{
+    if (gtk_widget_get_visible (GTK_WIDGET (data->window)))
+        exm_local_install_open_file (data->window, manager, data->file);
+    g_signal_handlers_disconnect_by_func (manager, open_local_when_ready, data);
+}
+
 static void
 exm_application_open (GApplication  *app,
                       GFile        **files,
@@ -127,6 +151,26 @@ exm_application_open (GApplication  *app,
 
     if (n_files <= 0)
         return;
+
+    /* Opening a local file uses exactly the same confirmation workflow as the
+     * picker. Do not register ZIP MIME associations or bypass validation. */
+    if (g_file_is_native (files[0]))
+    {
+        ExmManager *manager = exm_application_get_manager (EXM_APPLICATION (app));
+        gboolean ready = FALSE;
+        g_object_get (manager, "is-ready", &ready, NULL);
+        if (ready)
+            exm_local_install_open_file (GTK_WINDOW (window), manager, files[0]);
+        else
+        {
+            PendingLocalOpen *data = g_new0 (PendingLocalOpen, 1);
+            data->window = g_object_ref (GTK_WINDOW (window));
+            data->file = g_object_ref (files[0]);
+            g_signal_connect_data (manager, "notify::is-ready", G_CALLBACK (open_local_when_ready),
+                                    data, pending_local_open_free, 0);
+        }
+        return;
+    }
 
     uri = g_uri_parse (g_file_get_uri (files[0]), G_URI_FLAGS_NONE, &error);
     if (error)
@@ -220,7 +264,7 @@ exm_application_show_about (GSimpleAction *action G_GNUC_UNUSED,
 {
     ExmApplication *self = EXM_APPLICATION (user_data);
     GtkWindow *window = NULL;
-    const gchar *authors[] = {"Matthew Jakeman", "Óscar Fernández Díaz", NULL};
+    const gchar *authors[] = {"Matthew Jakeman", "Óscar Fernández Díaz", "Extension Manager Local contributors", NULL};
     const gchar *credits[] = {"Gabriel Brand", NULL};
 
     AdwDialog *about_dialog;
@@ -229,7 +273,7 @@ exm_application_show_about (GSimpleAction *action G_GNUC_UNUSED,
 
     window = gtk_application_get_active_window (GTK_APPLICATION (self));
 
-    about_dialog = adw_about_dialog_new_from_appdata (g_strdup_printf ("%s/com.mattjakeman.ExtensionManager.metainfo.xml", RESOURCE_PATH),
+    about_dialog = adw_about_dialog_new_from_appdata (g_strdup_printf ("%s/metainfo.xml", RESOURCE_PATH),
                                                       strstr (APP_ID, ".Devel") == NULL ? APP_VERSION : NULL);
 
     adw_about_dialog_set_version (ADW_ABOUT_DIALOG (about_dialog), APP_VERSION);

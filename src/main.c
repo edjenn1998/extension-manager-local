@@ -30,7 +30,7 @@
 #include "exm-backtrace.h"
 #include "exm-error-dialog.h"
 
-#define APP_URL "https://github.com/mjakeman/extension-manager"
+#define APP_URL "your Extension Manager Local distributor (not the upstream issue tracker)"
 
 static int pipe_fd[2];
 
@@ -94,6 +94,18 @@ run_app (int   argc,
 	g_autoptr(ExmApplication) app = NULL;
     int ret;
 
+    /* Configure TLS in the GUI child, not before the crash reporter forks.
+     * Use host-maintained CAs instead of the runtime's PKCS#11 module path. */
+    if (g_getenv ("EXM_APPIMAGE") && g_getenv ("EXM_TLS_CA_FILE"))
+    {
+        g_autoptr (GError) tls_error = NULL;
+        g_autoptr (GTlsDatabase) database = g_tls_file_database_new (g_getenv ("EXM_TLS_CA_FILE"), &tls_error);
+        if (database)
+            g_tls_backend_set_default_database (g_tls_backend_get_default (), database);
+        else
+            g_warning ("Cannot load host certificate authorities: %s", tls_error->message);
+    }
+
     /* Setup backtrace service */
     exm_backtrace_init (argv[0]);
     signal (SIGSEGV, handler);
@@ -133,7 +145,9 @@ main (int   argc,
 
     // Set up gettext translations
 	setlocale (LC_ALL, "");
-	bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
+    g_autofree gchar *portable_locale = g_getenv ("EXM_APPDIR")
+        ? g_build_filename (g_getenv ("EXM_APPDIR"), "usr", "share", "locale", NULL) : NULL;
+	bindtextdomain (GETTEXT_PACKAGE, portable_locale ? portable_locale : LOCALEDIR);
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
 	textdomain (GETTEXT_PACKAGE);
 

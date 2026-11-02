@@ -1,128 +1,67 @@
-<div align="center">
-  <img src="/data/icons/com.mattjakeman.ExtensionManager.svg" width="64">
-  <h1 align="center">Extension Manager</h1>
-  <p align="center">A native tool for browsing, installing, and managing GNOME Shell Extensions</p>
-  
-  [![Build Status](https://img.shields.io/github/actions/workflow/status/mjakeman/extension-manager/main.yml?branch=master)](https://github.com/mjakeman/extension-manager/actions/workflows/main.yml)
-[![Translation status](https://hosted.weblate.org/widget/extension-manager/svg-badge.svg)](https://hosted.weblate.org/engage/extension-manager/)
-[![Release Version](https://img.shields.io/github/v/release/mjakeman/extension-manager)](github.com/mjakeman/extension-manager/releases/latest)
-[![Downloads](https://img.shields.io/badge/dynamic/json?color=green&label=downloads&query=installs_total&url=https%3A%2F%2Fflathub.org%2Fapi%2Fv2%2Fstats%2Fcom.mattjakeman.ExtensionManager)](https://flathub.org/apps/details/com.mattjakeman.ExtensionManager)
-[![License (GPL-3.0)](https://img.shields.io/github/license/mjakeman/extension-manager)](http://www.gnu.org/licenses/gpl-3.0)
+# Extension Manager Local
 
-  <sup>Written with GTK 4 and libadwaita</sup>
-  
-![Screenshot of the main GUI (light mode)](data/screenshot-installed-light.png#gh-light-mode-only)
-![Screenshot of the main GUI (dark mode)](data/screenshot-browse-dark.png#gh-dark-mode-only)
+A native C/GTK4/libadwaita fork of [Extension Manager](https://github.com/mjakeman/extension-manager), based on commit `c9bc1723340bb58cdf8cffaa09f43f737bf5d4e3` (0.6.5). Original authors: Matthew Jakeman, Óscar Fernández Díaz, and upstream contributors. This is **not an official upstream build**.
 
-</div>
+**The only added extension-management feature is installing extensions from local ZIP files, including replacing an existing extension with an updated ZIP.** This is the original Extension Manager codebase, not a rewrite or redesign. Browsing, searching, online installation, and the existing management interface come from upstream. The separate name/application ID, purple icon, and AppImage packaging distinguish this build; they are not additional management features. See [CREDITS.md](CREDITS.md) for attribution.
 
-## 📋 Features
-The tool supports:
- - Browsing and searching extensions from `extensions.gnome.org`
- - Installation and Removal
- - Enabling and Disabling
- - Updating in-app ([GNOME 43+](https://github.com/mjakeman/extension-manager/wiki/Known-Issue:-Updates))
- - Screenshots &amp; Images
- - Ratings &amp; Comments
- - Translations ([add your language!](#-translations))
+Changes: one **Install from ZIP…** menu action, validated local installation/replacement using GNOME's installer, pending-login Installed entries, separate identity, and a purple recoloring of the original icon. Original interface, Installed/Browse tabs, online provider, and management workflows remain. The symbolic icon retains its original monochrome design for GNOME's symbolic rendering. Original artwork and copyright notices remain; see `README.upstream.md` and `COPYING`.
 
-If there's something you'd like to see, contributions are welcome!
+The icon history credits Matthew Jakeman and daudix-UFO. The fork changes only its colors, not its path geometry.
 
-## 💬 Community
-We now have a matrix room for Extension Manager.
+## Run
 
-Join and say hello! https://matrix.to/#/#extension-manager:matrix.org
+Download the AppImage from **[GitHub Releases](https://github.com/edjenn1998/extension-manager-local/releases/latest)**. The commands below use the source tree's `dist/` directory; if you downloaded the file elsewhere, omit `dist/`.
 
-## 💻 Installing
-Flatpak is the recommended way to install Extension Manager. 
-
-You can get the latest version from flathub by clicking the button below. There
-may also be independently-maintained packages available for your distribution.
-
-<a href='https://flathub.org/apps/com.mattjakeman.ExtensionManager'>
-<img width='240' alt='Get it on Flathub' src='https://flathub.org/api/badge?locale=en'/>
-</a>
-
-### Third Party Packages
-You may also be able to obtain Extension Manager from your distribution's package manager.
-
-> [!IMPORTANT]
-> These packages are **maintained independently** and thus may differ from the official version on Flathub. There is no guarantee of support. Please report any issues experienced to the package maintainer (not here!).
-
-[![Packaging status](https://repology.org/badge/vertical-allrepos/extension-manager.svg)](https://repology.org/project/extension-manager/versions)
-
-## 🌐 Translations
-Extension Manager is translated into more than 30 languages.
-
-> [!NOTE]
-> We use [Weblate](https://weblate.org/en/) - an open source continuous localisation tool - for translation management. Access to Hosted Weblate is kindly provided free of charge to the Extension Manager project.
-
-### Contribute
-Contributions to translations are always welcome!
-
-We have a comprehensive translation guide [here](/po/README.md).
-
-If you are new to Localisation (l10n), fear not! The entire process is explained above in as much detail as possible. If you have any trouble, please also [get in touch](#-community).
-
-## ⚠️ Known Issues
-### Extensions are not being updated
-Updates do not work out of the box on GNOME 40 and certain older versions of GNOME
-41 and 42 **unless the official GNOME Extensions app is also installed**. See here
-for details and a simple workaround: [Wiki Page](https://github.com/mjakeman/extension-manager/wiki/Known-Issue:-Updates)
-
-## ⏰ Using Unsupported Extensions
-GNOME Shell will not load extensions that were not designed for your current
-version. You can override this behaviour by manually disabling GNOME Shell's
-version check. Extension Manager will respect this preference and allow you
-to use unsupported extensions fully.
-
-> [!CAUTION]
-> Unsupported extensions will likely not work as intended and
-> may introduce instability to your system. Disable the version check at your own risk.
-
-> [!IMPORTANT]
-> Re-enable the version check before filing issues against GNOME components.
-
-Turn off the version check and allow unsupported extensions:
-
-```
-gsettings set org.gnome.shell disable-extension-version-validation true
+```sh
+chmod +x dist/ExtensionManagerLocal-x86_64.AppImage
+./dist/ExtensionManagerLocal-x86_64.AppImage
 ```
 
-Use the default setting and return to safety:
+No root, compilation, development libraries, or Flatpak installation is required to run this actual SquashFS AppImage. Without FUSE, use `./dist/ExtensionManagerLocal-x86_64.AppImage --appimage-extract-and-run`.
+
+Optional GNOME launcher/dock icon integration: `./dist/ExtensionManagerLocal-x86_64.AppImage --install-desktop`. This installs only this fork's desktop entry and purple icon in your user data directory, without root. Keep the AppImage in place, or rerun the command after moving it. On Wayland, this installed desktop ID is how Shell obtains the window/dock icon.
+
+**Host requirements:** x86_64 Linux, glibc ≥2.42, a GNOME Shell session/session D-Bus, `/usr/bin/gnome-extensions`, `/usr/bin/glib-compile-schemas`, Bash, host fonts and CA certificates, and unprivileged user namespaces for sandboxed image decoding. GUI libraries, TLS backend, schemas, translations, icons, image loaders, and Bubblewrap are bundled. Shell, glibc, graphics session, and dconf service remain host components. Tested on CachyOS GNOME 51.1/Wayland; other distributions/older glibc are **not certified**. Generic runtime libraries avoid CachyOS CPU-specific binaries. Flatpak is only a packaging input.
+
+ID: `io.github.edjenn1998.ExtensionManagerLocal`. It can run alongside upstream, with separate application window preferences. **Both apps intentionally manage the same user's GNOME extensions**, not independent collections.
+
+## Install or upgrade
+
+1. Main menu → **Install from ZIP…** → choose a local ZIP.
+2. Review name, UUID, version if available, supported Shell versions, and trust warning.
+3. Choose **Install** or **Replace**. Identity is determined by UUID, never filename/version. Versionless upgrades and deliberate downgrades are allowed after confirmation.
+4. Success means GNOME's installer confirmed installation and the installed UUID was verified, **not** that the new code is running.
+5. **Log out and log back in**. Enable a newly installed extension in Installed afterward if wanted.
+
+Opening a local ZIP as an AppImage command-line argument uses the same graphical validation and confirmation flow; it never installs silently or takes over ZIP file associations.
+
+GNOME caches imported JavaScript; even same-version/versionless replacements cannot reliably be hot-reloaded. On Wayland, restarting Shell in place is unavailable. The app does not restart Shell, log you out, disable compatibility checks, or toggle extensions during replacement. Existing enabled/disabled preferences and GSettings/dconf values are left untouched. An extension's changed code/schema can still require migration or stop supporting old settings. System extensions are overridden for your user, never modified system-wide. GNOME's `--force` operation is not transactional: back up important extension code, particularly when disk space is low. Failures show the actual diagnostic and are not reported as successful.
+
+Installed refreshes automatically. New disk-only UUIDs show a login-required description and unavailable toggle until Shell discovers them. Already loaded rows retain the **running Shell version/state**, with a local-update notice during the current app session. After login Shell is authoritative again. Disk-only entries cannot be managed through Shell before discovery.
+
+## Validation
+
+Require `metadata.json` and `extension.js` directly at ZIP root, as produced by `gnome-extensions pack`. Require safe `uuid`, `name`, `description`, and nonempty string-array `shell-version`; numeric `version` is optional. Validate a private snapshot before confirmation. Reject absolute/traversing/duplicate/conflicting paths, links, special files, encryption, multi-volume/ZIP64 archives, malformed metadata, and excessive sizes. Limits: 128 MiB compressed, 256 MiB expanded, 1 MiB metadata, 10,000 entries. Preflight schemas with host `glib-compile-schemas --strict --dry-run`. GNOME's CLI, not this fork, extracts into the extension installation directory.
+
+Unsupported Shell versions require an explicit warning/confirmation; GNOME may refuse to load them. GNOME ≥40 matches major version; older versions match major/minor. Validation is not a code safety audit: **only install trusted extension code**.
+
+## Rebuild
+
+Build dependencies: C compiler, Meson, Ninja, pkg-config, gettext, Blueprint compiler, GLib development tools (`gdbus-codegen`, `glib-mkenums`), GTK4, libadwaita ≥1.8, JSON-GLib, libsoup 3, libxml2, Glycin 2/Glycin GTK4 2, and libarchive development files. Tests also use Python 3, GNOME CLI, `dbus-run-session`, GSettings/dconf.
+
+```sh
+meson setup build --prefix=/usr -Dbacktrace=false -Dpackage=AppImage
+meson compile -C build
+meson test -C build --print-errorlogs
+python build-aux/package-appimage.py \
+  --runtime /path/to/org.gnome.Platform/50/files \
+  --dconf /path/to/extracted-generic-x86_64-dconf \
+  --dconf-source /path/to/dconf-51.0.tar.xz \
+  --appimagetool /path/to/appimagetool.AppImage
 ```
-gsettings reset org.gnome.shell disable-extension-version-validation
-```
 
-## 🔨 Building
-The easiest way to build is by cloning this repo with GNOME Builder. It
-will automatically resolve all relevant flatpak SDKs automatically.
+Install `org.gnome.Platform//50` as a build input, extract a **generic** dconf package, obtain its matching source tarball and [appimagetool](https://github.com/AppImage/appimagetool/releases). Packaging also needs `rsvg-convert`, `gio-querymodules`, `desktop-file-validate`, and ELF utilities. The script checks relocations and creates `dist/ExtensionManagerLocal.AppDir`, the AppImage, and corresponding application source archive. Move an existing generated AppDir aside before rebuilding. AppImage `--check-runtime` prints linking diagnostics; it is not a GUI test. See `PACKAGING.md` and `TEST-RESULTS.md`.
 
-Extension Manager needs a recent version of the GNOME SDK in order to build. See the [Development](build-aux/com.mattjakeman.ExtensionManager.Devel.json) or [Stable](/build-aux/com.mattjakeman.ExtensionManager.json) Flatpak manifests for a full dependency list.
+## License
 
-### Dependencies
-Extension Manager depends on the following libraries:
- - gettext
- - glycin (and glycin-gtk4)
- - gtk4
- - libadwaita
- - libjson-glib
- - libsoup
- - libxml2
- - [blueprint](https://gitlab.gnome.org/jwestman/blueprint-compiler)
-
-On Debian-based distributions, the required dependencies can be installed with the following command:
-```shell
-sudo apt install blueprint-compiler gettext libadwaita-1-dev libglycin-2-dev libglycin-gtk4-2-dev libgtk-4-dev libjson-glib-dev libsoup-3.0-dev libxml2-dev meson
-```
-
-### Building From Source
-```shell
-meson setup _build
-meson compile -C _build
-meson install -C _build
-```
-
-## 👫 Code of Conduct
-This project follows the [GNOME Code of Conduct](https://conduct.gnome.org/). Please
-adhere to it in all project spaces and interactions.
+GPL-3.0-or-later (`COPYING`). Retain all copyright/artwork notices. Distribute `ExtensionManagerLocal-source.tar.gz` alongside the binary: it contains the complete modified application source and build scripts. The release's separate `ExtensionManagerLocal-third-party-sources.tar.zst` supplies bundled-library sources and the matching runtime build recipes/patches. Extracting the AppImage allows replacing shared libraries. Bundled library licenses and an exact GNOME runtime source/build manifest are included, with file origins/hashes in `bundled-files.json`. Preserve these source assets when redistributing; see `PACKAGING.md`.

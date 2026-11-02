@@ -1,0 +1,23 @@
+name: Source checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Check Python and launcher syntax
+        run: |
+          python3 -m py_compile build-aux/*.py tests/*.py
+          bash -n build-aux/AppRun
+          bash -n build-aux/bwrap
+          git diff --check
+      # Full native/packaged tests require GTK/GNOME development dependencies
+      # and a live GNOME session; see TEST-RESULTS.md. This job is not that test.

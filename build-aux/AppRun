@@ -1,0 +1,91 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+set -eu
+APPDIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+export EXM_APPDIR="$APPDIR" EXM_APPIMAGE=1
+
+if [[ "${1:-}" == --install-desktop ]]; then
+    # Optional, rootless integration. Wayland window/dock icons are resolved by
+    # Shell using an installed desktop ID, not an application-supplied bitmap.
+    id=io.github.edjenn1998.ExtensionManagerLocal
+    data="${XDG_DATA_HOME:-$HOME/.local/share}"
+    desktop="$data/applications/$id.desktop"
+    icon="$data/icons/hicolor/scalable/apps/$id.svg"
+    if [[ -e "$desktop" ]] && ! grep -q '^X-ExtensionManagerLocal-AppImage=true$' "$desktop"; then
+        echo "Refusing to overwrite an existing unmanaged desktop entry: $desktop" >&2
+        exit 1
+    fi
+    if [[ -e "$icon" && ! -e "$desktop" ]]; then
+        echo "Refusing to overwrite an existing icon: $icon" >&2
+        exit 1
+    fi
+    image="$(readlink -f -- "${APPIMAGE:-$APPDIR/AppRun}")"
+    if [[ "$image" == *$'\n'* || "$image" == *$'\r'* ]]; then
+        echo 'Desktop integration requires a path without newline characters.' >&2
+        exit 1
+    fi
+    # Desktop-entry string unescaping precedes Exec argument unescaping.
+    escaped="${image//\\/\\\\\\\\}"
+    escaped="${escaped//\"/\\\\\"}"
+    escaped="${escaped//\$/\\\\\$}"
+    escaped="${escaped//\`/\\\\\`}"
+    escaped="${escaped//%/%%}"
+    mkdir -p -- "$(dirname -- "$desktop")" "$(dirname -- "$icon")"
+    cp -- "$APPDIR/$id.svg" "$icon"
+    temporary="$(mktemp "$data/applications/.extension-manager-local.XXXXXX")"
+    printf '%s\n' '[Desktop Entry]' 'Type=Application' 'Name=Extension Manager Local' \
+        "Exec=/usr/bin/env \"$escaped\" %U" "Icon=$id" "StartupWMClass=$id" 'Terminal=false' \
+        'Categories=GTK;Utility;' 'OnlyShowIn=GNOME;' 'DBusActivatable=false' \
+        'MimeType=x-scheme-handler/gnome-extensions;' 'X-ExtensionManagerLocal-AppImage=true' > "$temporary"
+    chmod 644 "$temporary"
+    mv -- "$temporary" "$desktop"
+    echo "Installed launcher: $desktop"
+    echo 'Keep the AppImage at its current path, or rerun --install-desktop after moving it.'
+    exit
+fi
+
+# Do not inject bundled GLib into the system gnome-extensions executable.
+for name in PATH LD_LIBRARY_PATH GI_TYPELIB_PATH GIO_EXTRA_MODULES GIO_MODULE_DIR GSETTINGS_SCHEMA_DIR XDG_DATA_DIRS GTK_PATH GTK_EXE_PREFIX GTK_DATA_PREFIX GDK_PIXBUF_MODULE_FILE GDK_PIXBUF_MODULEDIR; do
+    if [[ -v $name ]]; then
+        export "EXM_HOST_$name=${!name}"
+    else
+        unset "EXM_HOST_$name"
+    fi
+done
+export PATH="$APPDIR/usr/bin:$PATH"
+export LD_LIBRARY_PATH="$APPDIR/usr/lib"
+export GIO_MODULE_DIR="$APPDIR/usr/lib/gio/modules"
+export GIO_EXTRA_MODULES="$GIO_MODULE_DIR"
+export GSETTINGS_SCHEMA_DIR="$APPDIR/usr/share/glib-2.0/schemas"
+export XDG_DATA_DIRS="$APPDIR/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+unset GTK_PATH GTK_EXE_PREFIX GTK_DATA_PREFIX GDK_PIXBUF_MODULE_FILE GDK_PIXBUF_MODULEDIR GI_TYPELIB_PATH
+
+# Avoid mixing bundled GTK with host Vulkan/OpenGL driver stacks.
+export GSK_RENDERER="${GSK_RENDERER:-cairo}"
+export FONTCONFIG_PATH="$APPDIR/usr/etc/fonts"
+export FONTCONFIG_FILE="$APPDIR/usr/etc/fonts/fonts.conf"
+for certificates in /etc/ssl/certs/ca-certificates.crt /etc/pki/tls/certs/ca-bundle.crt /etc/ssl/cert.pem; do
+    if [[ -r "$certificates" ]]; then
+        export EXM_TLS_CA_FILE="$certificates"
+        break
+    fi
+done
+config="$(mktemp -d "${XDG_RUNTIME_DIR:-/tmp}/extension-manager-local.XXXXXX")"
+trap 'rm -rf -- "$config"' EXIT
+mkdir -p "$config/glycin-loaders/2+/conf.d"
+for file in "$APPDIR"/usr/share/glycin-loaders/2+/conf.d/*.conf; do
+    replacement="${APPDIR//\\/\\\\}"
+    replacement="${replacement//&/\\&}"
+    replacement="${replacement//|/\\|}"
+    sed "s|Exec=/usr/|Exec=$replacement/usr/|g" "$file" > "$config/glycin-loaders/2+/conf.d/$(basename "$file")"
+done
+export GLYCIN_DATA_DIR="$config"
+
+if [[ "${1:-}" == --check-runtime ]]; then
+    ldd -r "$APPDIR/usr/bin/extension-manager-local"
+    for file in "$APPDIR"/usr/libexec/glycin-loaders/2+/* "$GIO_MODULE_DIR"/*.so "$APPDIR/usr/libexec/bwrap"; do
+        ldd -r "$file"
+    done
+    exit
+fi
+"$APPDIR/usr/bin/extension-manager-local" "$@"

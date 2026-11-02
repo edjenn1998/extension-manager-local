@@ -42,6 +42,7 @@ struct _ExmExtension
     gboolean has_update;
     gboolean can_change;
     gboolean is_user;
+    gboolean local_pending;
     GPtrArray *session_modes;
     GHashTable *donations;
 };
@@ -64,6 +65,7 @@ enum {
     PROP_HAS_UPDATE,
     PROP_CAN_CHANGE,
     PROP_IS_USER,
+    PROP_LOCAL_PENDING,
     PROP_SESSION_MODES,
     PROP_DONATIONS,
     N_PROPS
@@ -149,6 +151,9 @@ exm_extension_get_property (GObject    *object,
     case PROP_IS_USER:
         g_value_set_boolean (value, self->is_user);
         break;
+    case PROP_LOCAL_PENDING:
+        g_value_set_boolean (value, self->local_pending);
+        break;
     case PROP_SESSION_MODES:
         g_value_set_boxed (value, self->session_modes);
         break;
@@ -220,6 +225,9 @@ exm_extension_set_property (GObject      *object,
     case PROP_IS_USER:
         self->is_user = g_value_get_boolean (value);
         break;
+    case PROP_LOCAL_PENDING:
+        self->local_pending = g_value_get_boolean (value);
+        break;
     case PROP_SESSION_MODES:
         if (self->session_modes)
             g_ptr_array_unref (self->session_modes);
@@ -270,6 +278,10 @@ exm_extension_class_init (ExmExtensionClass *klass)
                              "UUID",
                              NULL,
                              G_PARAM_READWRITE|G_PARAM_CONSTRUCT_ONLY);
+
+    properties [PROP_LOCAL_PENDING] =
+        g_param_spec_boolean ("local-pending", "Local Pending", "Local files need a new Shell session",
+                              FALSE, G_PARAM_READWRITE);
 
     properties [PROP_NAME] =
         g_param_spec_string ("name",

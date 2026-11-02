@@ -3,18 +3,19 @@
 	<id>@app_id@</id>
 	<metadata_license>CC0-1.0</metadata_license>
 	<project_license>GPL-3.0-or-later</project_license>
-  <name>Extension Manager</name>
-  <summary>Install GNOME Extensions</summary>
+  <name>Extension Manager Local</name>
+  <summary>Manage GNOME extensions and install local ZIP bundles</summary>
   <content_rating type="oars-1.1" />
-  <developer id="com.mattjakeman">
-    <name translate="no">Matthew Jakeman</name>
+  <developer id="io.github.edjenn1998">
+    <name translate="no">Extension Manager Local contributors</name>
   </developer>
 	<description>
-	  <p>Browse and install GNOME Shell extensions to customise your desktop.</p>
+	  <p>Browse and install GNOME Shell extensions to customise your desktop. An independent fork of Matthew Jakeman's Extension Manager, with local ZIP installation and replacement.</p>
     <p>Features:</p>
     <ul>
       <li>Browse extensions.gnome.org right inside the app</li>
       <li>Manage the extensions you already have installed</li>
+      <li>Install and replace extensions from trusted local ZIP files</li>
     </ul>
 	</description>
   <screenshots>
@@ -37,7 +38,6 @@
   </screenshots>
   <launchable type="desktop-id">@app_id@.desktop</launchable>
   <url type="homepage">https://mattjakeman.com/apps/extension-manager</url>
-  <url type="bugtracker">https://github.com/mjakeman/extension-manager/issues</url>
   <url type="help">https://github.com/mjakeman/extension-manager/discussions</url>
   <url type="donation">https://ko-fi.com/mjakeman</url>
   <url type="translate">https://github.com/mjakeman/extension-manager/blob/master/po/README.md</url>
@@ -53,8 +53,8 @@
     <display_length compare="ge">360</display_length>
   </requires>
   <branding>
-    <color type="primary" scheme_preference="light">#95d1ff</color>
-    <color type="primary" scheme_preference="dark">#005edf</color>
+    <color type="primary" scheme_preference="light">#8b5cf6</color>
+    <color type="primary" scheme_preference="dark">#6d28d9</color>
   </branding>
   <releases>
     <release version="0.6.5" date="2025-10-01">

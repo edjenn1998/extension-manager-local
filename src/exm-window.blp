@@ -4,7 +4,7 @@ using Adw 1;
 template $ExmWindow: Adw.ApplicationWindow {
   width-request: 360;
   height-request: 294;
-  title: _("Extension Manager");
+  title: _("Extension Manager Local");
 
   Adw.Breakpoint {
     condition ("max-width: 400sp")
@@ -180,6 +180,10 @@ template $ExmWindow: Adw.ApplicationWindow {
 
 menu primary_menu {
   section {
+    item (_("_Install from ZIP…"), "win.install-zip")
+  }
+
+  section {
     // Translators: the character preceded by "_" should not be the same
     // as others in the same menu
     item {
@@ -198,7 +202,7 @@ menu primary_menu {
   section {
     item (_("_Upgrade Assistant"), "win.show-upgrade-assistant")
     item (_("_Keyboard Shortcuts"), "app.shortcuts")
-    item (_("_About Extension Manager"), "app.about")
+    item (_("_About Extension Manager Local"), "app.about")
   }
 }
 
