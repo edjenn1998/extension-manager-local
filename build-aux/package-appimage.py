@@ -107,7 +107,9 @@ with tarfile.open(args.dconf_source) as dconf_source:
     (licenses / "dconf-COPYING").write_bytes(dconf_source.extractfile(copying).read())
 third_party = dist / "third-party-sources"
 third_party.mkdir(exist_ok=True)
-shutil.copy2(args.dconf_source, third_party / args.dconf_source.name)
+dconf_source_copy = third_party / args.dconf_source.name
+if args.dconf_source.resolve() != dconf_source_copy.resolve():
+    shutil.copy2(args.dconf_source, dconf_source_copy)
 for name in ["COPYING", "README.md", "PACKAGING.md", "TEST-RESULTS.md", "CREDITS.md", "RELEASE-NOTES.md"]:
     shutil.copy2(source / name, licenses / name)
 shutil.copy2(runtime / "manifest.json", licenses / "gnome-runtime-manifest.json")

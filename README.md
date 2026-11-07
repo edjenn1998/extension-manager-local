@@ -2,9 +2,9 @@
 
 A native C/GTK4/libadwaita fork of [Extension Manager](https://github.com/mjakeman/extension-manager), based on commit `c9bc1723340bb58cdf8cffaa09f43f737bf5d4e3` (0.6.5). Original authors: Matthew Jakeman, Óscar Fernández Díaz, and upstream contributors. This is **not an official upstream build**.
 
-**The only added extension-management feature is installing extensions from local ZIP files, including replacing an existing extension with an updated ZIP.** This is the original Extension Manager codebase, not a rewrite or redesign. Browsing, searching, online installation, and the existing management interface come from upstream. The separate name/application ID, purple icon, and AppImage packaging distinguish this build; they are not additional management features. See [CREDITS.md](CREDITS.md) for attribution.
+This fork adds **local ZIP installation** and **graphical extension backup and restore**. This is the original Extension Manager codebase, not a rewrite or redesign. Browsing, searching, online installation, and the existing management interface come from upstream. The separate name/application ID, purple icon, and AppImage packaging distinguish this build. See [CREDITS.md](CREDITS.md) for attribution.
 
-Changes: one **Install from ZIP…** menu action, validated local installation/replacement using GNOME's installer, pending-login Installed entries, separate identity, and a purple recoloring of the original icon. Original interface, Installed/Browse tabs, online provider, and management workflows remain. The symbolic icon retains its original monochrome design for GNOME's symbolic rendering. Original artwork and copyright notices remain; see `README.upstream.md` and `COPYING`.
+Changes: **Install from ZIP…**, **Export Extensions…**, **Import Extensions…**, validated local installation/replacement using GNOME's installer, pending-login Installed entries, separate identity, and a purple recoloring of the original icon. Original interface, Installed/Browse tabs, online provider, and management workflows remain. The symbolic icon retains its original monochrome design for GNOME's symbolic rendering. Original artwork and copyright notices remain; see `README.upstream.md` and `COPYING`.
 
 The icon history credits Matthew Jakeman and daudix-UFO. The fork changes only its colors, not its path geometry.
 
@@ -39,7 +39,97 @@ GNOME caches imported JavaScript; even same-version/versionless replacements can
 
 Installed refreshes automatically. New disk-only UUIDs show a login-required description and unavailable toggle until Shell discovers them. Already loaded rows retain the **running Shell version/state**, with a local-update notice during the current app session. After login Shell is authoritative again. Disk-only entries cannot be managed through Shell before discovery.
 
-## Validation
+## Backup and restore
+
+The updated AppImage includes a **Backup and Restore** menu section. Older
+local-ZIP-only AppImages must be replaced with the updated build to use it.
+
+### Create a backup
+
+1. Menu → **Export Extensions…**. Select extensions, or use **Select All / Deselect All**.
+2. Choose **List Backup (JSON)** or **Full Backup (ZIP with extension code)**.
+3. Leave **Include extension settings** and **Include enabled/disabled states**
+   checked unless you want to omit them.
+4. Choose **Export**, save using the native file dialog, and review the report.
+   One extension's failure does not prevent others from being saved. Check the
+   report before relying on a backup.
+
+**List Backup** saves UUIDs, names, versions where known, declared Shell versions,
+source classification, supported settings and optional states. Missing extensions
+are downloaded from extensions.gnome.org during restore; unpublished extensions
+cannot be reconstructed from a list alone.
+
+**Full Backup** adds selected user-installed extensions, including unpublished
+custom extensions. It does not copy system extensions, protected directories,
+external configuration, caches or arbitrary user files. Links, sensitive filenames,
+special files and unsupported assets cause that extension's full export to fail
+rather than create an incomplete bundle. Review custom code/assets for embedded
+credentials before export. Validation is not a code safety audit.
+In particular, JSON assets other than `metadata.json` are currently refused
+because static data cannot reliably be distinguished from stored credentials.
+
+### Restore after reinstalling Linux
+
+1. Copy your `.json` or `.zip` backup to the new computer (USB, encrypted storage,
+   or a secure transfer). There are no machine-specific installation paths.
+2. Install this fork, log in to GNOME, and select menu → **Import Extensions…**.
+3. Choose the file. Review installed/missing, compatibility and settings status;
+   deselect unwanted extensions.
+4. Independently select **Restore extensions**, **Restore extension settings**,
+   and **Restore enabled/disabled states**. Confirm before settings are overwritten.
+   Existing extension files are **kept**, never replaced; use Install from ZIP
+   separately if you deliberately want to replace one. No system directories are
+   modified.
+5. Review the detailed report. A failure does not stop later selections. Stopping
+   retains completed operations and skips the rest.
+6. Log out/in to load new code. If Shell could not restore a newly installed
+   extension's state before login, import again with **only states checked**.
+   GNOME's global extensions switch is deliberately not changed.
+
+Example: export a Full Backup of a panel extension and your unpublished extension,
+copy it to USB, reinstall Fedora/CachyOS/Ubuntu with a compatible GNOME version,
+install this fork, import, confirm settings restoration, review the report, and
+log out/in. Bundled extensions do not need to be searched for online.
+
+### Settings coverage and limitations
+
+- Schemas are enumerated from each extension's installed `schemas/gschemas.compiled`,
+  **not guessed from UUIDs**. Only `/org/gnome/shell/extensions/` paths are supported.
+  Missing compiled schemas are reported; the whole dconf database is never dumped.
+- Fixed-path schemas are supported. Relocatable schemas require an unambiguous
+  literal constructor in `extension.js` or `prefs.js`, of the form
+  `new Gio.Settings({schema_id: 'SCHEMA', path: '/org/gnome/shell/extensions/PATH/'})`.
+  Dynamic paths, helper patterns and multiple paths for one schema are not guessed.
+- Supported values: booleans, scalar integers/doubles, schema enums, and recognized
+  accelerator arrays (`shortcut`, `keybinding`, or `hotkey` keys). Sensitive key
+  names are filtered. Arbitrary strings, dictionaries, byte arrays and unknown
+  structured values are omitted, even under ordinary-looking keys. Consequently
+  some layout preferences, custom categories, sorting lists and other textual
+  customization **will not be backed up automatically**.
+- No external-file adapters are included yet. Unknown JSON/INI files, databases,
+  keyrings, other settings namespaces and unidentified storage are unsupported
+  and reported. Do not assume those preferences were preserved.
+- Import rediscovers destinations from the **current installed extension** and
+  checks schema, path, key, type, range and writability before writing. Incompatible
+  preferences are skipped and listed, never forced into dconf. Extension-specific
+  migrations may still be necessary.
+- GNOME does not reliably retain local-ZIP versus EGO provenance. System and known
+  pending local installations are identified; other user installs are honestly
+  labeled `user-unknown`.
+- Bundled/current installed compatibility uses metadata and the existing Shell
+  version matcher. Missing online extensions use the existing EGO provider and
+  Shell installer. Offline, removed, incompatible or unverifiable extensions are
+  skipped rather than forced. Backup inspection never executes extension code.
+- Conservative filtering cannot prove that every ordinary numeric preference or
+  embedded code asset is non-sensitive. **Treat backups as potentially sensitive**;
+  store and transfer them securely. Backups are not encrypted.
+- The format is distribution-independent, but the AppImage's existing glibc/runtime
+  requirements still apply. Different GNOME majors may require different code and
+  schemas; portability does not guarantee compatibility.
+
+See [docs/backup-format.md](docs/backup-format.md) for format, security limits and tests.
+
+## ZIP validation
 
 Require `metadata.json` and `extension.js` directly at ZIP root, as produced by `gnome-extensions pack`. Require safe `uuid`, `name`, `description`, and nonempty string-array `shell-version`; numeric `version` is optional. Validate a private snapshot before confirmation. Reject absolute/traversing/duplicate/conflicting paths, links, special files, encryption, multi-volume/ZIP64 archives, malformed metadata, and excessive sizes. Limits: 128 MiB compressed, 256 MiB expanded, 1 MiB metadata, 10,000 entries. Preflight schemas with host `glib-compile-schemas --strict --dry-run`. GNOME's CLI, not this fork, extracts into the extension installation directory.
 

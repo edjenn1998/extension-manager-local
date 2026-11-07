@@ -1,5 +1,78 @@
 # Build and verification
 
+## Updated AppImage verification (2026-11-07)
+
+Rebuilt `dist/ExtensionManagerLocal-x86_64.AppImage` from the current working
+tree, including graphical backup/restore. Matching application source is in
+`dist/ExtensionManagerLocal-source.tar.gz`; release hashes are in `dist/SHA256SUMS`.
+
+- Native build and all five Meson suites pass, including 12 backup and 12 ZIP cases.
+- The actual AppImage passes the read-only backup GUI smoke test: Shell discovery,
+  export options and selection controls, import options, native chooser opening
+  and cancellation, and clean shutdown with fatal GLib criticals enabled.
+- AppImage runtime relocation checks pass; bundled sandboxed PNG/SVG decoding and
+  icon geometry/color checks pass.
+- Rootless desktop-integration tests pass in disposable directories, including
+  managed updates, unmanaged-entry protection and special-character launch paths.
+- The previous AppImage and AppDir were preserved under
+  `/tmp/opencode/exm-previous-package-20261107-092853/`.
+
+These checks did not restore a backup into the live extension collection or
+change real extension settings. Complete graphical export/restore, online restore,
+and post-login activation are not newly claimed as tested. The user's report that
+the previous manual changes worked is not an automated end-to-end test.
+
+## Backup and restore source verification (2026-11-07)
+
+The initial feature verification built natively, before AppImage packaging. Build output:
+`/tmp/opencode/exm-build/src/extension-manager-local`. The previous build referred
+to missing temporary build tools, so Meson/Blueprint and matching GLib codegen
+were provisioned under `/tmp/opencode`; no system packages were changed.
+
+Completed on the local GNOME 51.1 Wayland session:
+
+- Full native application compilation succeeds with no new compiler warnings.
+- All five Meson suites pass: desktop, schema and AppStream validation, the
+  existing 12 local-ZIP cases, and 12 new backup cases.
+- New backup tests cover v1 creation/parsing/additive compatibility, extension
+  identity and compatibility, fixed/relocatable schemas, boolean/integer/double/
+  enum/accelerator types, read-only restore preview, secret filtering, unsupported
+  storage, changed/missing schemas and keys, changed types/ranges, invalid values,
+  partial key failures, ZIP round-trip, real GNOME CLI installation in a private
+  extension directory, existing conflicts, system-code exclusion, nested path
+  traversal, links, malformed/oversized manifests, missing bundles, unsupported
+  assets and embedded-credential filtering.
+- A real isolated dconf round-trip exports fixture values, resets them and checks
+  their exact restored values. HOME/XDG directories and dconf profile are private
+  and established before the disposable D-Bus service starts. No live extension
+  preferences are used as fixtures.
+- All 12 backup cases also pass with AddressSanitizer/UndefinedBehaviorSanitizer.
+  Leak detection was disabled; this is not a leak audit.
+- Live native GUI smoke passes with memory-backed settings and disposable XDG
+  directories: Shell discovery, export options, select/deselect controls, import
+  options, native file chooser opening/cancellation, and clean window shutdown.
+  `G_DEBUG=fatal-criticals` was enabled. No real extension was installed or toggled
+  by the GUI test.
+
+Not claimed as tested: filename submission in the native portal, a complete
+graphical restore, real EGO installation/offline behavior during restore,
+multi-extension installation failures/cancellation through the GUI, logout/login
+activation or state retry, other GNOME versions/distributions, or a newly packaged
+AppImage. No AppImage rebuild was performed. Unknown configuration storage,
+free-text/dictionary preferences, generalized dynamic relocatable schemas and
+external configuration adapters remain unsupported, as documented in README.
+
+Reproduce the new smoke test with the source build's compiled schemas:
+
+```sh
+glib-compile-schemas /tmp/opencode/exm-build/data
+GSETTINGS_SCHEMA_DIR=/tmp/opencode/exm-build/data \
+  python3 tests/backup-gui-smoke.py /tmp/opencode/exm-build/src/extension-manager-local
+```
+
+The historical results below describe the previous local-ZIP/AppImage work,
+not validation of backup/restore in a release AppImage.
+
 Environment: CachyOS x86_64, GNOME Shell/gnome-extensions 51.1, live Wayland
 session. Native compiler GCC 16.2.1, Meson 1.12.1. Upstream base:
 `c9bc1723340bb58cdf8cffaa09f43f737bf5d4e3` (0.6.5).

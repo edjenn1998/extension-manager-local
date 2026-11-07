@@ -44,6 +44,7 @@ src/exm-versions-dialog.blp
 src/exm-versions-dialog.c
 src/exm-window.blp
 src/exm-window.c
+src/exm-backup-dialog.c
 src/exm-zoom-picture.c
 src/local/exm-extension.c
 src/local/exm-manager.c

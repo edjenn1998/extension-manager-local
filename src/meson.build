@@ -3,6 +3,8 @@ exm_sources = [
   'exm-window.c',
   'exm-application.c',
   'exm-local-install.c',
+  'exm-backup-dialog.c',
+  'local/exm-backup.c',
   'local/exm-local-zip.c',
   'exm-gnome-shell-search-provider.c',
 

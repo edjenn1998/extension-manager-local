@@ -442,6 +442,45 @@ exm_manager_is_installed_uuid (ExmManager  *self,
     return FALSE;
 }
 
+static void
+set_enabled_done (GObject *source, GAsyncResult *result, gpointer user_data)
+{
+    g_autoptr (GTask) task = user_data;
+    g_autoptr (GError) error = NULL;
+    gboolean success = FALSE;
+    gboolean enabled = GPOINTER_TO_INT (g_task_get_task_data (task));
+    if (enabled)
+        shell_extensions_call_enable_extension_finish (SHELL_EXTENSIONS (source), &success, result, &error);
+    else
+        shell_extensions_call_disable_extension_finish (SHELL_EXTENSIONS (source), &success, result, &error);
+    if (error) g_task_return_error (task, g_steal_pointer (&error));
+    else if (!success) g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_FAILED,
+        "GNOME Shell refused the state change (a new installation may require login)");
+    else g_task_return_boolean (task, TRUE);
+}
+
+void
+exm_manager_set_enabled_async (ExmManager *self, const gchar *uuid, gboolean enabled,
+                               GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data)
+{
+    GTask *task = g_task_new (self, cancellable, callback, user_data);
+    g_task_set_task_data (task, GINT_TO_POINTER (enabled), NULL);
+    if (!self->proxy) {
+        g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_NOT_CONNECTED, "GNOME Shell unavailable");
+        g_object_unref (task);
+    } else if (enabled)
+        shell_extensions_call_enable_extension (self->proxy, uuid, cancellable, set_enabled_done, task);
+    else
+        shell_extensions_call_disable_extension (self->proxy, uuid, cancellable, set_enabled_done, task);
+}
+
+gboolean
+exm_manager_set_enabled_finish (ExmManager *self, GAsyncResult *result, GError **error)
+{
+    g_return_val_if_fail (g_task_is_valid (result, self), FALSE);
+    return g_task_propagate_boolean (G_TASK (result), error);
+}
+
 void
 exm_manager_install_async (ExmManager          *self,
                            const gchar         *uuid,

@@ -29,6 +29,7 @@
 #include "exm-extension-error-dialog.h"
 #include "exm-installed-page.h"
 #include "exm-local-install.h"
+#include "exm-backup-dialog.h"
 #include "exm-screenshot-view.h"
 #include "exm-types.h"
 #include "exm-upgrade-assistant.h"
@@ -460,6 +461,14 @@ show_view (GtkWidget  *widget,
 }
 
 static void
+backup_extensions (GtkWidget *widget, const char *action_name,
+                   GVariant *param G_GNUC_UNUSED)
+{
+    exm_backup_dialog_present (GTK_WINDOW (widget), EXM_WINDOW (widget)->manager,
+                              g_str_equal (action_name, "win.import-extensions"));
+}
+
+static void
 install_zip (GtkWidget *widget,
              const char *action_name G_GNUC_UNUSED,
              GVariant *param G_GNUC_UNUSED)
@@ -837,6 +846,8 @@ exm_window_class_init (ExmWindowClass *klass)
     // then be passed to each page.
     gtk_widget_class_install_action (widget_class, "ext.install", "(sb)", extension_install);
     gtk_widget_class_install_action (widget_class, "win.install-zip", NULL, install_zip);
+    gtk_widget_class_install_action (widget_class, "win.export-extensions", NULL, backup_extensions);
+    gtk_widget_class_install_action (widget_class, "win.import-extensions", NULL, backup_extensions);
     gtk_widget_class_install_action (widget_class, "ext.remove", "s", extension_remove);
     gtk_widget_class_install_action (widget_class, "ext.open-prefs", "s", extension_open_prefs);
     gtk_widget_class_install_action (widget_class, "ext.show-error", "s", extension_show_error);

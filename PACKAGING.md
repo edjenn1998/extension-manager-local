@@ -15,8 +15,9 @@ Recipe: https://gitlab.archlinux.org/archlinux/packaging/packages/dconf
 The matching dconf tarball is included in `dist/third-party-sources/`, SHA-256
 `e65c1b7867f836faad9f9ee04acf5c5a6cae2bbc784833fe093207e0cb590248`.
 
-Builder: https://github.com/AppImage/appimagetool continuous commit `4919cc4`
-(2026-11-01). The builder downloads/embeds type2-runtime:
+Builder for the backup/restore update:
+https://github.com/AppImage/appimagetool continuous commit `11d54c9`
+(2026-11-06; previous local-ZIP build used `4919cc4`). The builder downloads/embeds type2-runtime:
 https://github.com/AppImage/type2-runtime , embedded runtime commit `fedfad5`.
 Record the final artifact hash.
 

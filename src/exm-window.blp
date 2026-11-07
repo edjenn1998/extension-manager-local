@@ -180,6 +180,11 @@ template $ExmWindow: Adw.ApplicationWindow {
 
 menu primary_menu {
   section {
+    label: _("Backup and Restore");
+    item (_("_Export Extensions…"), "win.export-extensions")
+    item (_("_Import Extensions…"), "win.import-extensions")
+  }
+  section {
     item (_("_Install from ZIP…"), "win.install-zip")
   }
 
